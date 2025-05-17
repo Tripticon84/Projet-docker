@@ -1,0 +1,22 @@
+[
+    {
+        "collaborateur_id": 2,
+        "message": "salut",
+        "timestamp": 1746016609
+    },
+    {
+        "collaborateur_id": 2,
+        "message": "test",
+        "timestamp": 1746016890
+    },
+    {
+        "collaborateur_id": 3,
+        "message": "azerty",
+        "timestamp": 1746024001
+    },
+    {
+        "collaborateur_id": 1,
+        "message": "uiop",
+        "timestamp": 1746190394
+    }
+]

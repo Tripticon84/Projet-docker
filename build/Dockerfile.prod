@@ -1,0 +1,26 @@
+FROM php:8.2-apache
+
+# Télécharger le script d'installation des extensions PHP
+ADD --chmod=0755 https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
+
+# Installer les extensions demandées
+RUN install-php-extensions \
+    pdo_mysql \
+    mysqli \
+    mbstring \
+    json \
+    openssl \
+    curl \
+    zip \
+    gd \
+    intl \
+    bcmath
+
+# Activer les modules Apache nécessaires
+RUN a2enmod proxy proxy_http rewrite
+
+# Ajout des fichiers du projet
+COPY ./src/ /var/www/html/
+
+# # Ajouter la configuration pour le reverse proxy
+# COPY ./reverse-proxy.conf /etc/apache2/sites-available/000-default.conf

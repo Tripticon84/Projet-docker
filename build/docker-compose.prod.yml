@@ -1,0 +1,132 @@
+
+services:
+  webapp:
+    image: tripticon84/webapp:latest
+    # image: tripticon84/my-php-apache:latest
+    container_name: webapp
+    # volumes:
+    #   - ./src:/var/www/html
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - mariadb
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  mariadb:
+    image: mariadb:11.7
+    container_name: mariadb
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mariadb-data:/var/lib/mysql
+      - ./src/ressources/businesscare.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - app-network
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    restart: always
+    environment:
+      PMA_HOST: mariadb
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "8080:80"
+    depends_on:
+      - mariadb
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 3s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  zabbix-db:
+    image: mariadb:11.5
+    container_name: zabbix-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: zabbix
+      MYSQL_USER: zabbix
+      MYSQL_PASSWORD: ${ZABBIX_DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${ZABBIX_ROOT_PASSWORD}
+    volumes:
+      - zabbix-db-data:/var/lib/mysql
+    networks:
+      - monitoring-network
+
+
+  zabbix-server:
+    image: zabbix/zabbix-server-mysql:alpine-7.2-latest
+    container_name: zabbix-server
+    restart: unless-stopped
+    environment:
+      DB_SERVER_HOST: zabbix-db
+      MYSQL_DATABASE: zabbix
+      MYSQL_USER: zabbix
+      MYSQL_PASSWORD: ${ZABBIX_DB_PASSWORD}
+    depends_on:
+      - zabbix-db
+    networks:
+      - monitoring-network
+
+  zabbix-web:
+    image: zabbix/zabbix-web-apache-mysql:alpine-7.2-latest
+    container_name: zabbix-web
+    restart: unless-stopped
+    environment:
+      DB_SERVER_HOST: zabbix-db
+      MYSQL_DATABASE: zabbix
+      MYSQL_USER: zabbix
+      MYSQL_PASSWORD: ${ZABBIX_DB_PASSWORD}
+      ZBX_SERVER_HOST: zabbix-server
+      PHP_TZ: Europe/Paris
+    depends_on:
+      - zabbix-server
+    ports:
+      - "9090:8080"
+    networks:
+      - monitoring-network
+
+  portainer:
+    image: portainer/portainer-ce:alpine
+    container_name: portainer
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer-data:/data
+    ports:
+      - "9000:9000"
+    networks:
+      - monitoring-network
+
+
+  ###############
+  #     Fun     #
+  ###############
+  doom:
+    image: callumhoughton22/doom-in-docker:0.1
+    container_name: doom
+    ports:
+      - 1337:8080
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
+  monitoring-network:
+    driver: bridge
+
+volumes:
+  mariadb-data:
+  portainer-data:
+  zabbix-db-data:
