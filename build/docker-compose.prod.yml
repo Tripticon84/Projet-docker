@@ -11,8 +11,6 @@ services:
       - "443:443"
     depends_on:
       - mariadb
-    networks:
-      - app-network
     restart: unless-stopped
 
   mariadb:
@@ -27,8 +25,6 @@ services:
     volumes:
       - mariadb-data:/var/lib/mysql
       - ./src/ressources/businesscare.sql:/docker-entrypoint-initdb.d/init.sql
-    networks:
-      - app-network
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
@@ -41,9 +37,6 @@ services:
       - "8080:80"
     depends_on:
       - mariadb
-    networks:
-      - app-network
-
 
 
 
