@@ -681,40 +681,25 @@ function loadRecentInvoices(societyId) {
 
 // Ajouter un employé
 function addEmployee(societyId) {
-  // Vérifier d'abord si la société peut ajouter un employé
-  fetch(`/api/company/checkEmployeeLimit.php?societe_id=${societyId}`, {
-    method: 'GET',
-    headers: {
-      'Authorization': 'Bearer ' + getToken()
-    }
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (!data.status) {
-      alert(data.message);
-      return;
-    }
-    
-    // Si la limite n'est pas atteinte, continuer avec l'ajout de l'employé
-    const formData = {
-      nom: document.getElementById("nom").value,
-      prenom: document.getElementById("prenom").value,
-      username: document.getElementById("username").value,
-      role: document.getElementById("role").value,
-      email: document.getElementById("email").value,
-      telephone: document.getElementById("telephone").value,
-      password: document.getElementById("password").value,
-      id_societe: societyId,
-    };
+  const formData = {
+    nom: document.getElementById("nom").value,
+    prenom: document.getElementById("prenom").value,
+    username: document.getElementById("username").value,
+    role: document.getElementById("role").value,
+    email: document.getElementById("email").value,
+    telephone: document.getElementById("telephone").value,
+    password: document.getElementById("password").value,
+    id_societe: societyId,
+  };
 
-    fetch("/api/employee/create.php", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + getToken(),
-      },
-      body: JSON.stringify(formData),
-    })
+  fetch("/api/employee/create.php", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + getToken(),
+    },
+    body: JSON.stringify(formData),
+  })
     .then((response) => response.json())
     .then((data) => {
       if (data.id) {
@@ -728,10 +713,7 @@ function addEmployee(societyId) {
         document.getElementById("addEmployeeForm").reset();
 
         // Recharger la liste des employés
-        refreshEmployeeList();
-        
-        // Mettre à jour les informations sur la limite
-        refreshEmployeeLimitInfo();
+        loadEmployees(societyId);
 
         // Afficher un message de succès
         alert("Collaborateur ajouté avec succès!");
@@ -744,11 +726,6 @@ function addEmployee(societyId) {
       console.error("Erreur lors de l'ajout du collaborateur:", error);
       alert("Une erreur est survenue lors de l'ajout du collaborateur");
     });
-  })
-  .catch(error => {
-    console.error('Erreur lors de la vérification de la limite d\'employés:', error);
-    alert('Erreur lors de la vérification de votre limite d\'employés.');
-  });
 }
 
 // Ouvrir le modal de modification d'un employé
@@ -1989,134 +1966,61 @@ function deactivateEmployee(id) {
 // Réactiver un collaborateur
 function reactivateEmployee(id) {
   if (confirm('Êtes-vous sûr de vouloir réactiver ce collaborateur?')) {
-    // Vérifier d'abord si la société peut ajouter un employé
-    fetch(`/api/company/checkEmployeeLimit.php?societe_id=${societyId}`, {
-      method: 'GET',
+    // Afficher un message de chargement
+    const loadingMessage = document.createElement('div');
+    loadingMessage.className = 'position-fixed top-50 start-50 translate-middle bg-white p-3 rounded shadow';
+    loadingMessage.innerHTML = '<div class="spinner-border text-primary me-2" role="status"></div> Réactivation en cours...';
+    document.body.appendChild(loadingMessage);
+
+    fetch('/api/employee/reactivate.php', {
+      method: 'PATCH',
       headers: {
+        'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + getToken()
-      }
+      },
+      body: JSON.stringify({ id: id })
     })
-    .then(response => response.json())
+    .then(response => {
+      // Supprimer le message de chargement
+      document.body.removeChild(loadingMessage);
+      return response.json();
+    })
     .then(data => {
-      if (!data.status) {
-        alert(data.message);
-        return;
+      // Considérer comme un succès si soit data.success est true, soit si le message est positif
+      if (data.success || 
+        (data.message && (
+          data.message.toLowerCase().includes("reactivated") || 
+          data.message.toLowerCase().includes("réactivé") ||
+          data.message.toLowerCase().includes("employee") ||
+          data.message.toLowerCase().includes("collaborateur")
+        ))
+      ) {
+        // Fermer le modal de détails s'il est ouvert
+        const viewModal = bootstrap.Modal.getInstance(document.getElementById('viewEmployeeModal'));
+        if (viewModal) {
+          viewModal.hide();
+        }
+
+        // Recharger la liste des employés après un court délai
+        setTimeout(() => {
+          refreshEmployeeList();
+        }, 500);
+
+        // Afficher un message de succès
+        alert('Collaborateur réactivé avec succès!');
+      } else {
+        // Erreur véritable
+        alert(`Erreur: ${data.message || 'Une erreur est survenue'}`);
       }
-      
-      // Si la limite n'est pas atteinte, continuer avec la réactivation
-      // Afficher un message de chargement
-      const loadingMessage = document.createElement('div');
-      loadingMessage.className = 'position-fixed top-50 start-50 translate-middle bg-white p-3 rounded shadow';
-      loadingMessage.innerHTML = '<div class="spinner-border text-primary me-2" role="status"></div> Réactivation en cours...';
-      document.body.appendChild(loadingMessage);
-
-      fetch('/api/employee/reactivate.php', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + getToken()
-        },
-        body: JSON.stringify({ id: id })
-      })
-      .then(response => {
-        // Supprimer le message de chargement
-        document.body.removeChild(loadingMessage);
-        return response.json();
-      })
-      .then(data => {
-        // Considérer comme un succès si soit data.success est true, soit si le message est positif
-        if (data.success || 
-          (data.message && (
-            data.message.toLowerCase().includes("reactivated") || 
-            data.message.toLowerCase().includes("réactivé") ||
-            data.message.toLowerCase().includes("employee") ||
-            data.message.toLowerCase().includes("collaborateur")
-          ))
-        ) {
-          // Fermer le modal de détails s'il est ouvert
-          const viewModal = bootstrap.Modal.getInstance(document.getElementById('viewEmployeeModal'));
-          if (viewModal) {
-            viewModal.hide();
-          }
-
-          // Recharger la liste des employés après un court délai
-          setTimeout(() => {
-            refreshEmployeeList();
-            refreshEmployeeLimitInfo();
-          }, 500);
-
-          // Afficher un message de succès
-          alert('Collaborateur réactivé avec succès!');
-        } else {
-          // Erreur véritable
-          alert(`Erreur: ${data.message || 'Une erreur est survenue'}`);
-        }
-      })
-      .catch(error => {
-        // Supprimer le message de chargement en cas d'erreur
-        if (document.body.contains(loadingMessage)) {
-          document.body.removeChild(loadingMessage);
-        }
-        
-        console.error('Erreur lors de la réactivation du collaborateur:', error);
-        alert('Une erreur est survenue lors de la réactivation du collaborateur');
-      });
     })
     .catch(error => {
-      console.error('Erreur lors de la vérification de la limite d\'employés:', error);
-      alert('Erreur lors de la vérification de votre limite d\'employés.');
+      // Supprimer le message de chargement en cas d'erreur
+      if (document.body.contains(loadingMessage)) {
+        document.body.removeChild(loadingMessage);
+      }
+      
+      console.error('Erreur lors de la réactivation du collaborateur:', error);
+      alert('Une erreur est survenue lors de la réactivation du collaborateur');
     });
   }
-}
-
-// Fonction pour recharger les données de la limite d'employés après ajout/désactivation
-function refreshEmployeeLimitInfo() {
-  checkEmployeeLimit();
-}
-
-// Fonction pour vérifier la limite d'employés
-function checkEmployeeLimit() {
-  fetch(`/api/company/checkEmployeeLimit.php?societe_id=${societyId}`, {
-    method: 'GET',
-    headers: {
-      'Authorization': 'Bearer ' + getToken()
-    }
-  })
-  .then(response => response.json())
-  .then(data => {
-    employeeLimitInfo = data;
-    
-    // Mettre à jour l'affichage de la limite si les éléments existent
-    const limitInfoElement = document.getElementById('employee-count-message');
-    const upgradeButton = document.getElementById('upgrade-subscription-btn');
-    
-    if (!limitInfoElement || !upgradeButton) {
-      return; // Si on n'est pas sur la page des employés, ne rien faire
-    }
-    
-    if (data.status) {
-      // Si la société peut ajouter des employés
-      limitInfoElement.innerHTML = `Vous avez actuellement <strong>${data.current}</strong> collaborateurs actifs sur un maximum de <strong>${data.max}</strong> (${data.remaining} restants).`;
-      upgradeButton.style.display = data.remaining < 3 ? 'inline-block' : 'none'; // Afficher le bouton si moins de 3 places restantes
-    } else {
-      // Si la limite est atteinte
-      limitInfoElement.innerHTML = `<strong>Limite atteinte :</strong> ${data.message}`;
-      upgradeButton.style.display = 'inline-block';
-      document.getElementById('employee-limit-info').classList.remove('alert-info');
-      document.getElementById('employee-limit-info').classList.add('alert-warning');
-    }
-    
-    // Afficher les informations sur l'abonnement si disponibles
-    if (data.subscription) {
-      const subscriptionInfo = `<br><small>Abonnement actuel : ${data.subscription.nom} - Validité : ${new Date(data.subscription.date_debut).toLocaleDateString('fr-FR')} au ${new Date(data.subscription.date_fin).toLocaleDateString('fr-FR')}</small>`;
-      limitInfoElement.innerHTML += subscriptionInfo;
-    }
-  })
-  .catch(error => {
-    console.error('Erreur lors de la vérification de la limite d\'employés:', error);
-    const limitInfoElement = document.getElementById('employee-count-message');
-    if (limitInfoElement) {
-      limitInfoElement.innerHTML = 'Erreur lors du chargement des informations sur votre limite d\'employés.';
-    }
-  });
 }

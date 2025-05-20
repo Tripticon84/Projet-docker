@@ -20,28 +20,28 @@ if (!isset($_GET['societe_id'])) {
 $societe_id = $_GET['societe_id'];
 
 // Récupérer les frais associés à l'entreprise
-$fees = getCompanyFees($societe_id);
+$costs = getCompanyOtherCost($societe_id);
 
-if (!$fees) {
+if (!$costs) {
     returnError(404, 'No costs found');
     return;
 }
 
 $result = []; // Initialize the result array
 
-foreach ($fees as $fee) {
+foreach ($costs as $cost) {
     $result[] = [
-        "frais_id" => $fee['frais_id'],
-        "nom" => $fee['nom'],
-        "montant" => $fee['montant'],
-        "date_creation" => $fee['date_creation'],
-        "description" => $fee['description'],
-        "est_abonnement" => $fee['est_abonnement'],
+        "frais_id" => $cost['frais_id'],
+        "nom" => $cost['nom'],
+        "montant" => $cost['montant'],
+        "date_creation" => $cost['date_creation'],
+        "description" => $cost['description'],
+        "est_abonnement" => $cost['est_abonnement'],
         "devis" => [
-            "devis_id" => $fee['devis_id'],
-            "date_debut" => $fee['date_debut'],
-            "date_fin" => $fee['date_fin'],
-            "statut" => $fee['statut']
+            "devis_id" => $cost['devis_id'],
+            "date_debut" => $cost['date_debut'],
+            "date_fin" => $cost['date_fin'],
+            "statut" => $cost['statut']
         ]
     ];
 }

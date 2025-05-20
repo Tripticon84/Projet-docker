@@ -10,20 +10,22 @@ if (!methodIsAllowed('read')) {
     return;
 }
 
-acceptedTokens(true, true, false, true);
+acceptedTokens(true, true, true, true);
 
-// Vérification de l'ID du prestataire
-if (!isset($_GET['prestataire_id'])) {
-    returnError(400, 'prestataire_id not provided');
+
+// Vérifier si l'ID est fourni
+if (!isset($_GET['id']) || empty($_GET['id'])) {
+    returnError(400, 'Provider ID is required');
     return;
 }
 
-$id = intval($_GET['prestataire_id']);
-$provider = getProviderById($id);
+// Récupérer le prestataire par son ID
+$providerId = $_GET['id'];
+$provider = getProviderById($providerId);
 
 // Vérifier si le prestataire existe
 if (!$provider) {
-    returnError(404, 'provider not found');
+    returnError(404, 'Provider not found');
     return;
 }
 

@@ -227,7 +227,7 @@ if (!$profile) {
         document.addEventListener('DOMContentLoaded', function() {
             const prestataire_id = document.getElementById('prestataire_id').value;
             
-            fetch(`/api/provider/getActivite.php?id=${prestataire_id}`)
+            fetch(`/api/provider/activities.php?id=${prestataire_id}`)
             .then(response => response.json())
             .then(data => {
                 const container = document.getElementById('activities-container');
@@ -258,10 +258,10 @@ if (!$profile) {
                 data.forEach(activity => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                        <td>${activity.name}</td>
+                        <td>${activity.nom}</td>
                         <td>${activity.type}</td>
                         <td>${new Date(activity.date).toLocaleDateString('fr-FR')}</td>
-                        <td>${activity.place}</td>
+                        <td>${activity.adresse}, ${activity.code_postal} ${activity.ville}</td>
                         <td>
                             <button class="btn btn-sm btn-outline-primary" onclick="editActivity(${activity.activite_id})">
                                 <i class="fas fa-calendar-alt"></i> Changer la date
@@ -281,17 +281,9 @@ if (!$profile) {
         // Function to edit activity date
         function editActivity(activityId) {
             // Fetch current activity details
-            fetch(`/api/provider/getActivite.php?id=${activityId}`)
+            fetch(`/api/provider/activity.php?id=${activityId}`)
             .then(response => response.json())
-            .then(activities => {
-                // Since getActivite.php returns an array, we need to get the first item
-                const activity = Array.isArray(activities) && activities.length > 0 ? activities[0] : null;
-                
-                if (!activity) {
-                    alert('Activité non trouvée');
-                    return;
-                }
-                
+            .then(activity => {
                 // Create modal for date editing
                 const modal = document.createElement('div');
                 modal.className = 'modal fade';
@@ -306,7 +298,7 @@ if (!$profile) {
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="editActivityModalLabel">Modifier la date: ${activity.name}</h5>
+                                <h5 class="modal-title" id="editActivityModalLabel">Modifier la date: ${activity.nom}</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body">

@@ -1,5 +1,4 @@
 <?php
-
 $title = "Inscription";
 
 require_once $_SERVER['DOCUMENT_ROOT'] . '/frontOffice/societe/includes/head.php';
@@ -147,11 +146,6 @@ if (isset($_GET['form_data']) && !empty($_GET['form_data'])) {
     .mb-3 {
         margin-bottom: 0.7rem !important;
     }
-    
-    .password-feedback {
-        font-size: 0.75rem;
-        margin-top: 0.25rem;
-    }
 </style>
 
 <div class="container d-flex align-items-center justify-content-center" style="min-height: 100vh; padding: 1rem 0;">
@@ -251,15 +245,14 @@ if (isset($_GET['form_data']) && !empty($_GET['form_data'])) {
                                 <label for="password" class="form-label">Mot de passe</label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light"><i class="fas fa-lock text-primary"></i></span>
-                                    <input type="password" class="form-control" id="password" name="password" required minlength="12">
+                                    <input type="password" class="form-control" id="password" name="password" required minlength="8">
                                 </div>
-                                <div class="password-feedback text-muted">Le mot de passe doit contenir au moins 12 caractères.</div>
                             </div>
                             <div class="col-md-6 mb-2">
                                 <label for="confirm_password" class="form-label">Confirmation</label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light"><i class="fas fa-lock text-primary"></i></span>
-                                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" required minlength="12">
+                                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
                                 </div>
                             </div>
                         </div>
@@ -299,36 +292,12 @@ if (isset($_GET['form_data']) && !empty($_GET['form_data'])) {
         const password = document.getElementById('password');
         const confirmPassword = document.getElementById('confirm_password');
         const form = document.querySelector('form');
-        const passwordFeedback = document.querySelector('.password-feedback');
-
-        // Validation du mot de passe lors de la frappe
-        password.addEventListener('input', function() {
-            if (password.value.length < 12) {
-                passwordFeedback.classList.remove('text-muted', 'text-success');
-                passwordFeedback.classList.add('text-danger');
-                passwordFeedback.textContent = 'Le mot de passe doit contenir au moins 12 caractères.';
-            } else {
-                passwordFeedback.classList.remove('text-muted', 'text-danger');
-                passwordFeedback.classList.add('text-success');
-                passwordFeedback.textContent = 'Longueur de mot de passe valide!';
-            }
-        });
 
         form.addEventListener('submit', function(e) {
-            // Vérification de la longueur du mot de passe
-            if (password.value.length < 12) {
-                e.preventDefault();
-                alert('Le mot de passe doit contenir au moins 12 caractères.');
-                password.focus();
-                return;
-            }
-            
-            // Vérification de la correspondance des mots de passe
             if (password.value !== confirmPassword.value) {
                 e.preventDefault();
                 alert('Les mots de passe ne correspondent pas');
                 confirmPassword.focus();
-                return;
             }
         });
     });

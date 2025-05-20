@@ -66,8 +66,7 @@ foreach ($activities as $activity) {
         "city" => $activity['ville'] ?? null,
         "postal_code" => $activity['code_postal'] ?? null,
         "type" => $activity['type'],
-        "id_estimate" => $activity['id_devis'],
-        "refused" => isset($activity['refusee']) ? (bool)$activity['refusee'] : false
+        "id_estimate" => $activity['id_devis']
     ];
 }
 

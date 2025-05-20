@@ -4,7 +4,7 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/api/utils/server.php';
 function getDatabaseConnection(): PDO
 {
     try {
-        $host = 'localhost';
+        $host = 'mariadb';
         $db = 'businesscare';
         $user = 'root';
         $pass = 'alpine';

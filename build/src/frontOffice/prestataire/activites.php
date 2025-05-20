@@ -23,11 +23,6 @@ $currentDate = date('Y-m-d');
 
 
 foreach ($activities as $activity) {
-    // Ne pas afficher les activités refusées
-    if (isset($activity['refusee']) && $activity['refusee'] == 1) {
-        continue;
-    }
-    
     if ($activity['date'] < $currentDate) {
         $pastActivities[] = $activity;
     } else {
@@ -35,25 +30,25 @@ foreach ($activities as $activity) {
     }
 }
 
-// Traitement de la demande de refus d'activité
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['refuse_activity'])) {
-    // Récupération de l'ID de l'activité à refuser
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_activity'])) {
     $activityId = $_POST['activity_id'];
+    $date = $_POST['date'];
     
-    // Appel de la fonction pour refuser l'activité
-    $result = refuseActivity($activityId);
+    $result = updateActivity($activityId, $date);
     
-    // Redirection avec message de succès ou d'erreur
     if ($result !== null) {
-        header("Location: activites.php?message=L'activité a été refusée avec succès");
+        
+        header("Location: activites.php?message=Date de l'activité mise à jour avec succès");
         exit();
     } else {
-        $error = "Erreur lors du refus de l'activité";
+        $error = "Erreur lors de la mise à jour de la date de l'activité";
     }
 }
 ?>
 
 <div class="container mt-4">
+    <
     <?php if (isset($_GET['message'])): ?>
     <div class="alert alert-success alert-dismissible fade show" role="alert">
         <?= htmlspecialchars($_GET['message']) ?>
@@ -108,14 +103,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['refuse_activity'])) {
                                             }
                                         ?>
                                     </p>
-                                    <div class="d-flex justify-content-end">
-                                        <!-- Bouton pour refuser l'activité -->
-                                        <button type="button" class="btn btn-danger btn-sm refuse-activity-btn" 
-                                                data-id="<?= $activity['activite_id'] ?>"
-                                                data-nom="<?= htmlspecialchars($activity['nom']) ?>">
-                                            <i class="fas fa-times-circle"></i> Refuser cette activité
-                                        </button>
-                                    </div>
+                                    <button type="button" class="btn btn-primary btn-sm edit-activity-btn" 
+                                            data-id="<?= $activity['activite_id'] ?>"
+                                            data-nom="<?= htmlspecialchars($activity['nom']) ?>"
+                                            data-date="<?= $activity['date'] ?>">
+                                        <i class="fas fa-calendar-alt"></i> Modifier la date
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -164,25 +157,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['refuse_activity'])) {
     </div>
 </div>
 
-<!-- Modal pour confirmer le refus d'une activité -->
-<div class="modal fade" id="refuseActivityModal" tabindex="-1" aria-labelledby="refuseActivityModalLabel" aria-hidden="true">
+
+<div class="modal fade" id="editActivityModal" tabindex="-1" aria-labelledby="editActivityModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="refuseActivityModalLabel">Confirmer le refus</h5>
+            <div class="modal-header">
+                <h5 class="modal-title" id="editActivityModalLabel">Modifier la date de l'activité</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>Êtes-vous sûr de vouloir refuser l'activité <strong id="refuse_activity_name"></strong> ?</p>
-                <p class="text-danger">Cette action est irréversible.</p>
-                
-                <form id="refuseActivityForm" method="POST" action="activites.php">
-                    <input type="hidden" name="refuse_activity" value="1">
-                    <input type="hidden" name="activity_id" id="refuse_activity_id">
+                <form id="editActivityForm" method="POST" action="activites.php">
+                    <input type="hidden" name="update_activity" value="1">
+                    <input type="hidden" name="activity_id" id="activity_id">
                     
-                    <div class="d-flex justify-content-end">
-                        <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Annuler</button>
-                        <button type="submit" class="btn btn-danger">Confirmer le refus</button>
+                    <div class="mb-3">
+                        <label for="activity_name" class="form-label">Activité</label>
+                        <input type="text" class="form-control" id="activity_name" readonly>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="date" class="form-label">Nouvelle date</label>
+                        <input type="date" class="form-control" id="date" name="date" required min="<?= date('Y-m-d') ?>">
+                        <small class="text-muted">Veuillez choisir une date à partir d'aujourd'hui.</small>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Enregistrer la nouvelle date</button>
                     </div>
                 </form>
             </div>
@@ -192,19 +192,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['refuse_activity'])) {
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Gestion des boutons de refus d'activité
-    const refuseButtons = document.querySelectorAll('.refuse-activity-btn');
-    refuseButtons.forEach(button => {
+    
+    const editButtons = document.querySelectorAll('.edit-activity-btn');
+    editButtons.forEach(button => {
         button.addEventListener('click', function() {
             const activityId = this.getAttribute('data-id');
             const nom = this.getAttribute('data-nom');
+            const date = this.getAttribute('data-date');
             
-            // Remplir le modal de confirmation
-            document.getElementById('refuse_activity_id').value = activityId;
-            document.getElementById('refuse_activity_name').textContent = nom;
             
-            // Afficher le modal de confirmation
-            const modal = new bootstrap.Modal(document.getElementById('refuseActivityModal'));
+            document.getElementById('activity_id').value = activityId;
+            document.getElementById('activity_name').value = nom;
+            document.getElementById('date').value = date;
+            
+            
+            const modal = new bootstrap.Modal(document.getElementById('editActivityModal'));
             modal.show();
         });
     });

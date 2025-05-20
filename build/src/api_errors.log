@@ -1,8 +1,0 @@
-[19-May-2025 19:22:13 UTC] DELETE request received in association/delete.php
-[19-May-2025 19:22:13 UTC] Database utility included successfully
-[19-May-2025 19:22:13 UTC] Request body: {"association_id":"1"}
-[19-May-2025 19:22:13 UTC] Processing association ID: 1
-[19-May-2025 19:22:13 UTC] Database connection established
-[19-May-2025 19:22:13 UTC] SQL prepared: UPDATE association SET desactivate = 1 WHERE association_id = :id
-[19-May-2025 19:22:13 UTC] SQL execution result: success
-[19-May-2025 19:22:13 UTC] Response sent successfully

@@ -112,7 +112,30 @@ include_once "../includes/head.php";
                     </div>
                 </div>
 
-
+                <!-- Quick Action Cards -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h5>Actions rapides</h5>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-center p-3 mb-3">
+                            <div class="mb-3">
+                                <i class="fas fa-user-check fa-2x text-success"></i>
+                            </div>
+                            <h6>Vérifier les candidats</h6>
+                            <button class="btn btn-sm btn-outline-success mt-2" onclick="scrollToCandidates()">Voir les candidats</button>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-center p-3 mb-3">
+                            <div class="mb-3">
+                                <i class="fas fa-envelope fa-2x text-warning"></i>
+                            </div>
+                            <h6>Contacter tous les prestataires</h6>
+                            <a href="#" class="btn btn-sm btn-outline-warning mt-2">Composer</a>
+                        </div>
+                    </div>
+                </div>
             </main>
         </div>
     </div>
@@ -280,7 +303,7 @@ include_once "../includes/head.php";
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end">
                                             <li><a class="dropdown-item" href="#" onclick="viewActivities(${provider.id}); return false;"><i class="fas fa-calendar-alt me-2"></i>Voir activités</a></li>
-                                            <li><a class="dropdown-item" href="modify.php?prestataire_id=${provider.id}"><i class="fas fa-edit me-2"></i>Modifier</a></li>
+                                            <li><a class="dropdown-item" href="modify.php?id=${provider.id}"><i class="fas fa-edit me-2"></i>Modifier</a></li>
                                             <li><hr class="dropdown-divider"></li>
                                             <li><a class="dropdown-item text-danger" href="#" onclick="deactivateProvider(${provider.id}); return false;"><i class="fas fa-user-slash me-2"></i>Désactiver</a></li>
                                         </ul>

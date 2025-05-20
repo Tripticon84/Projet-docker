@@ -119,6 +119,24 @@ include_once "../includes/head.php";
                             <a href="create.php" class="btn btn-sm btn-outline-primary mt-2">Nouvelle facture</a>
                         </div>
                     </div>
+                    <div class="col-md-4">
+                        <div class="card text-center p-3 mb-3">
+                            <div class="mb-3">
+                                <i class="fas fa-file-export fa-2x text-success"></i>
+                            </div>
+                            <h6>Exporter les factures</h6>
+                            <a href="#" class="btn btn-sm btn-outline-success mt-2">Exporter</a>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-center p-3 mb-3">
+                            <div class="mb-3">
+                                <i class="fas fa-chart-bar fa-2x text-warning"></i>
+                            </div>
+                            <h6>Statistiques des factures</h6>
+                            <a href="#" class="btn btn-sm btn-outline-warning mt-2">Voir stats</a>
+                        </div>
+                    </div>
                 </div>
             </main>
         </div>
@@ -286,7 +304,7 @@ include_once "../includes/head.php";
                             <li><a class="dropdown-item" href="modify.php?id=${invoice.facture_id}"><i class="fas fa-edit me-2"></i>Modifier</a></li>
                             <li><a class="dropdown-item" href="#" onclick="viewDetails(${invoice.facture_id}); return false;"><i class="fas fa-eye me-2"></i>Voir détails</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            
+                            <li><a class="dropdown-item text-danger" href="#" onclick="downloadPdf(${invoice.facture_id}); return false;"><i class="fas fa-file-pdf me-2"></i>Télécharger PDF</a></li>
                         </ul>
                     </div>
                 </td>

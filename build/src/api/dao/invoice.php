@@ -162,7 +162,7 @@ function getInvoiceByEstimateId($id)
     return $stmt->fetchAll();
 }
 
-function getFeesByInvoiceID($id)
+function GetOtherFeesByInvoiceId($id)
 {
     $db = getDatabaseConnection();
     // Récupérer l'ID du devis associé à cette facture
@@ -179,7 +179,7 @@ function getFeesByInvoiceID($id)
     $sql = "SELECT f.frais_id, f.montant, f.nom, f.description, f.est_abonnement
             FROM frais f
             JOIN INCLUT_FRAIS_DEVIS ifd ON f.frais_id = ifd.id_frais
-            WHERE ifd.id_devis = :id_devis AND f.est_abonnement = 0";
+            WHERE ifd.id_devis = :id_devis";
     $stmt = $db->prepare($sql);
     $stmt->execute(['id_devis' => $devis['id_devis']]);
 
@@ -297,7 +297,7 @@ function generatePDFForProvider($factureId){
     }
 
     // Récupérer les autres frais
-    $autresFrais = getFeesByInvoiceID($factureId);
+    $autresFrais = GetOtherFeesByInvoiceId($factureId);
     if ($autresFrais === null) {
         $autresFrais = []; // Aucun autre frais trouvé
     }
@@ -482,7 +482,7 @@ function generatePDFForCompany($factureId){
     }
 
     // Récupérer les autres frais
-    $autresFrais = getFeesByInvoiceID($factureId);
+    $autresFrais = GetOtherFeesByInvoiceId($factureId);
     if ($autresFrais === null) {
         $autresFrais = []; // Aucun autre frais trouvé
     }
@@ -679,7 +679,7 @@ function generateAndSaveCompanyInvoicePDF($factureId) {
     }
 
     // Récupérer les autres frais
-    $autresFrais = getFeesByInvoiceID($factureId);
+    $autresFrais = GetOtherFeesByInvoiceId($factureId);
     if ($autresFrais === null) {
         $autresFrais = []; // Aucun autre frais trouvé
     }
@@ -884,7 +884,7 @@ function generateAndSaveProviderInvoicePDF($factureId) {
     }
 
     // Récupérer les autres frais
-    $autresFrais = getFeesByInvoiceID($factureId);
+    $autresFrais = GetOtherFeesByInvoiceId($factureId);
     if ($autresFrais === null) {
         $autresFrais = []; // Aucun autre frais trouvé
     }

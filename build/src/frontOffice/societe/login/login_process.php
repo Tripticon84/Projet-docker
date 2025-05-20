@@ -46,12 +46,21 @@ if (!$result) {
     error("Identifiants inconnus");
 }
 
+// Si on arrive ici, c'est que tout est OK
+// Connexion
 
-$_SESSION["employee_count"] = $result["employee_count"];
-$_SESSION["plan"] = $result["plan"];
+session_start();
+
+// Vérifier si il n'y pas déjà de session active
+// if (isset($_SESSION)) {
+//     // Si une session est déjà active, on la détruit
+//     session_destroy();
+//     session_start();
+// }
+
+
 $_SESSION["societe_id"] = $result["societe_id"];
 $_SESSION["email"] = $result["email"];
-$_SESSION["societe_name"] = $result["nom"];
 
 
 // Login dans l'api pour récupérer le token

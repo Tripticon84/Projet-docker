@@ -13,6 +13,7 @@ if (!methodIsAllowed('update')) {
 
 acceptedTokens(true, false, false, false);
 
+
 $data = getBody();
 
 if (!validateMandatoryParams($data, ['facture_id'])) {
@@ -38,7 +39,7 @@ $id_prestataire = isset($data['id_prestataire']) ? $data['id_prestataire'] : nul
 
 
 if ($id_devis !== null && !(getEstimateById($id_devis))) {
-    returnError(404, 'Estimate not found');
+    returnError(404, 'Provider not found');
     return;
 }
 if ($id_prestataire !== null && !(getProviderById($id_prestataire))) {
@@ -52,8 +53,9 @@ if ($date_emission === null && $date_echeance === null && $montant === null && $
     return;
 }
 
-// CORRECTION: Inverser la logique de la condition - si le statut n'est pas valide, on renvoie une erreur
-if ($statut !== null && !isValidInvoiceStatus($statut)) {
+
+
+if (isValidInvoiceStatus($statut)) {
     returnError(400, 'Invalid status provided: '.$statut);
     return;
 }
@@ -69,7 +71,11 @@ $updatedInvoice = updateInvoice(
     $methode_paiement,
     $id_devis,
     $id_prestataire
+
 );
+
+
+
 
 if (!$updatedInvoice) {
     // Log the error for debugging
@@ -94,7 +100,7 @@ else {
         error_log("Erreur lors de la génération du PDF pour la facture ID: " . $invoice_id);
     }
 
-    echo json_encode(['message' => 'Invoice updated successfully', 'facture_id' => $invoice_id, 'pdf_path' => $pdfPath]);
+    echo json_encode(['facture_id' => $invoice_id, 'pdf_path' => $pdfPath]);
     http_response_code(200);
 }
 ?>

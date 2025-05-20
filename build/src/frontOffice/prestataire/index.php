@@ -220,6 +220,43 @@ include_once 'includes/header.php';
                 </div>
             </div>
 
+           
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0"><i class="fas fa-chart-line"></i> Mes statistiques</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Activités réalisées</span>
+                            <span class="fw-bold">12</span>
+                        </div>
+                        <div class="progress mt-2" style="height: 5px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: 75%;" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Note moyenne</span>
+                            <span class="fw-bold">4.7/5</span>
+                        </div>
+                        <div class="progress mt-2" style="height: 5px;">
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: 94%;" aria-valuenow="94" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="d-flex justify-content-between">
+                            <span>Taux de satisfaction</span>
+                            <span class="fw-bold">98%</span>
+                        </div>
+                        <div class="progress mt-2" style="height: 5px;">
+                            <div class="progress-bar bg-primary" role="progressbar" style="width: 98%;" aria-valuenow="98" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

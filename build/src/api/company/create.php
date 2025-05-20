@@ -3,8 +3,7 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/api/dao/company.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/api/utils/server.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/api/utils/hashPassword.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/api/dao/siret.php';
-// Ajouter en haut du fichier api/company/create.php, juste après les require_once
-error_log("HTTP Method détectée: " . $_SERVER['REQUEST_METHOD']);
+
 header('Content-Type: application/json');
 
 if (!methodIsAllowed('create')) {
@@ -23,14 +22,11 @@ $contact_person = $data['contact_person'];
 $password = hashPassword($data['password']);
 $telephone = $data['telephone'];
 $siret = $data['siret'];
-$desactivate = $data['desactivate'] ?? 0;
-$employee_count = $data['employee_count'] ?? 0; // Default to 0 if not provided
-$plan = $data['plan'] ?? 'starter'; // Default to 'starter' if not provided
-// Default to 0 if not provided
+$desactivate = $data['desactivate'] ?? 0; // Default to 0 if not provided
 
 
 
-if (validateMandatoryParams($data, ['nom', 'email', 'adresse', 'contact_person', 'password', 'telephone', 'siret','desactivate','employee_count','plan'])) {
+if (validateMandatoryParams($data, ['nom', 'email', 'adresse', 'contact_person', 'password', 'telephone', 'siret','desactivate'])) {
     try {
 
         if (getCompanyBySiret($siret)) {
@@ -74,21 +70,7 @@ if (validateMandatoryParams($data, ['nom', 'email', 'adresse', 'contact_person',
             return;
         }
 
-        if (empty($employee_count) || !is_numeric($employee_count) || $employee_count < 0) {
-            returnError(400, 'Invalid employee count.');
-            return;
-        }
-
-        if (empty($plan) || !is_string($plan)) {
-            returnError(400, 'Invalid plan.');
-            return;
-        }
-        if ($plan != 'basic' && $plan != 'premium' && $plan != 'starter') {
-            returnError(400, 'Invalid plan. Must be "starter" or "basic" or "premium".');
-            return;
-        }
-
-        $newSocietyId = createSociety($nom, $email, $adresse, $contact_person, $password, $telephone, $siret, $desactivate,$employee_count, $plan);
+        $newSocietyId = createSociety($nom, $email, $adresse, $contact_person, $password, $telephone, $siret, $desactivate);
 
         if (!$newSocietyId) {
             // Log the error for debugging

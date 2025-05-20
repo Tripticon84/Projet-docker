@@ -26,32 +26,11 @@ function getBody(): array
     return json_decode($body, true);
 }
 
-/**
- * Return a JSON formatted error response
- * 
- * @param int $code HTTP error code
- * @param string $message Error message
- * @return void
- */
-function returnError($code, $message) {
-    // Clear any previous output to ensure clean JSON response
-    if (ob_get_level()) ob_clean();
-    
-    // Set proper HTTP response code
+function returnError(int $code, string $message)
+{
     http_response_code($code);
-    
-    // Set content type to JSON
-    header('Content-Type: application/json');
-    
-    // Output the error as JSON
-    echo json_encode([
-        'error' => true,
-        'code' => $code,
-        'message' => $message
-    ]);
-    
-    // End the script to prevent any additional output
-    exit;
+    echo json_encode(['error' => $message]);
+    exit();
 }
 
 function returnSuccess($data, $code = 200)

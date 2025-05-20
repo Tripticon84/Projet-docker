@@ -23,8 +23,8 @@ if (!isset($data['prestataire_id']) || empty($data['prestataire_id'])) {
 }
 
 // Récupérer l'employee par son ID
-$id = $data['prestataire_id'];
-$existingProvider = getProviderById($id);
+$providerId = $data['prestataire_id'];
+$existingProvider = getProviderById($providerId);
 
 // Vérifier si l'employee existe
 if (!$existingProvider) {
