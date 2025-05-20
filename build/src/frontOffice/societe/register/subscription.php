@@ -1,31 +1,16 @@
 <?php
 
+session_start();
 
 // Vérifier si les données de l'entreprise sont présentes
-// if (!isset($_SESSION['company_data'])) {
-//     header('Location: register.php');
-//     exit();
-// }
+if (!isset($_SESSION['company_data'])) {
+    header('Location: register.php');
+    exit();
+}
 
 
 $title = "Inscription - Choisir votre abonnement";
 require_once $_SERVER['DOCUMENT_ROOT'] . '/frontOffice/societe/includes/head.php';
-
-// Récupération des erreurs et des données du formulaire depuis GET
-$subscription_errors = [];
-$form_data = [];
-
-if (isset($_GET['errors']) && !empty($_GET['errors'])) {
-    $subscription_errors = json_decode(urldecode($_GET['errors']), true);
-}
-
-if (isset($_GET['form_data']) && !empty($_GET['form_data'])) {
-    $form_data = json_decode(urldecode($_GET['form_data']), true);
-}
-
-echo "<pre>";
-print_r($_SESSION);
-echo "</pre>";
 
 ?>
 
@@ -194,13 +179,13 @@ echo "</pre>";
                         </div>
                     </div>
 
-                    <form method="post" action="complete_registration.php" id="subscription-form">
-                        <input type="hidden" name="plan" id="selected-plan" value="">
+                    <form method="post" action="subscription_process.php" id="subscription-form">
+                        <input type="hidden" name="plan" id="selected-plan" value="<?php echo htmlspecialchars($form_data['plan'] ?? ''); ?>">
 
                         <div class="row g-4">
                             <!-- Starter Plan -->
                             <div class="col-md-4">
-                                <div class="card plan-card h-100" data-plan="starter">
+                                <div class="card plan-card h-100" data-plan="starter" data-max-employees="30">
                                     <div class="card-header bg-primary text-white text-center">
                                         <h3 class="fw-bold">Starter</h3>
                                         <h4 class="fw-bold">180 €</h4>
@@ -225,7 +210,7 @@ echo "</pre>";
 
                             <!-- Basic Plan -->
                             <div class="col-md-4">
-                                <div class="card plan-card h-100" data-plan="basic">
+                                <div class="card plan-card h-100" data-plan="basic" data-max-employees="250" data-min-employees="1">
                                     <div class="card-header bg-primary text-white text-center">
                                         <span class="badge bg-warning position-absolute top-0 end-0 mt-2 me-2">Populaire</span>
                                         <h3 class="fw-bold">Basic</h3>
@@ -251,7 +236,7 @@ echo "</pre>";
 
                             <!-- Premium Plan -->
                             <div class="col-md-4">
-                                <div class="card plan-card h-100" data-plan="premium">
+                                <div class="card plan-card h-100" data-plan="premium" data-min-employees="251">
                                     <div class="card-header bg-primary text-white text-center">
                                         <h3 class="fw-bold">Premium</h3>
                                         <h4 class="fw-bold">100 €</h4>
@@ -279,12 +264,16 @@ echo "</pre>";
                             <div class="col-md-6 mx-auto">
                                 <div class="form-group">
                                     <label for="employee_count" class="form-label fw-bold mb-3">Nombre de collaborateurs :</label>
-                                    <input type="number" class="form-control form-control-lg text-center"
-                                           id="employee_count" name="employee_count" min="1"
-                                           value="<?php echo htmlspecialchars($form_data['employee_count'] ?? ''); ?>"
-                                           placeholder="Entrez le nombre de collaborateurs" required>
+                                    
+                                    <input type="number" class="form-control form-control-lg text-center" 
+                                        name="employee_count" id="employee_count"
+                                        value="<?php echo htmlspecialchars($form_data['employee_count'] ?? ''); ?>"
+                                        placeholder="Entrez le nombre de collaborateurs" required min="1">
                                     <div class="form-text mt-2">
                                         Ce nombre nous permettra de générer votre devis initial.
+                                    </div>
+                                    <div id="employee-error" class="invalid-feedback" style="display: none;">
+                                        Le nombre d'employés ne correspond pas au plan sélectionné.
                                     </div>
                                 </div>
                             </div>
@@ -312,7 +301,22 @@ echo "</pre>";
         const planCards = document.querySelectorAll('.plan-card');
         const selectedPlanInput = document.getElementById('selected-plan');
         const continueBtn = document.getElementById('continue-btn');
+        const employeeInput = document.getElementById('employee_count');
+        const employeeError = document.getElementById('employee-error');
+        let selectedCard = null;
 
+        // Pré-sélectionner le plan si défini dans form_data
+        const preselectedPlan = selectedPlanInput.value;
+        if (preselectedPlan) {
+            const cardToSelect = document.querySelector(`.plan-card[data-plan="${preselectedPlan}"]`);
+            if (cardToSelect) {
+                cardToSelect.classList.add('selected');
+                selectedCard = cardToSelect;
+                continueBtn.disabled = !validateEmployeeCount();
+            }
+        }
+
+        // Gestion de la sélection des plans
         planCards.forEach(card => {
             card.addEventListener('click', function() {
                 // Remove selected class from all cards
@@ -320,13 +324,68 @@ echo "</pre>";
 
                 // Add selected class to clicked card
                 this.classList.add('selected');
+                selectedCard = this;
 
                 // Update hidden input value
                 selectedPlanInput.value = this.dataset.plan;
 
-                // Enable continue button
-                continueBtn.disabled = false;
+                // Validate employee count
+                validateEmployeeCount();
+
+                // Enable continue button if valid
+                continueBtn.disabled = !validateEmployeeCount();
             });
+        });
+
+        // Validation du nombre d'employés en fonction du plan
+        employeeInput.addEventListener('input', function() {
+            validateEmployeeCount();
+            continueBtn.disabled = !validateEmployeeCount() || !selectedCard;
+        });
+
+        // Fonction de validation du nombre d'employés
+        function validateEmployeeCount() {
+            if (!selectedCard || !employeeInput.value) {
+                employeeError.style.display = 'none';
+                return false;
+            }
+
+            const count = parseInt(employeeInput.value);
+            const plan = selectedCard.dataset.plan;
+            const minEmployees = parseInt(selectedCard.dataset.minEmployees || 1);
+            const maxEmployees = parseInt(selectedCard.dataset.maxEmployees || Number.MAX_SAFE_INTEGER);
+            
+            if (count < minEmployees || count > maxEmployees) {
+                employeeInput.classList.add('is-invalid');
+                employeeError.style.display = 'block';
+                
+                if (plan === 'starter') {
+                    employeeError.textContent = 'Pour le plan Starter, le nombre de salariés doit être entre 1 et 30.';
+                } else if (plan === 'basic') {
+                    employeeError.textContent = 'Pour le plan Basic, le nombre de salariés doit être entre 1 et 250.';
+                } else if (plan === 'premium') {
+                    employeeError.textContent = 'Pour le plan Premium, le nombre de salariés doit être d\'au moins 251.';
+                }
+                
+                return false;
+            } else {
+                employeeInput.classList.remove('is-invalid');
+                employeeError.style.display = 'none';
+                return true;
+            }
+        }
+
+        // Validation au chargement de la page
+        if (selectedCard && employeeInput.value) {
+            validateEmployeeCount();
+        }
+
+        // Validation finale avant soumission
+        document.getElementById('subscription-form').addEventListener('submit', function(e) {
+            if (!validateEmployeeCount() || !selectedCard) {
+                e.preventDefault();
+                validateEmployeeCount();
+            }
         });
     });
 </script>

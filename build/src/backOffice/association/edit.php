@@ -87,14 +87,16 @@ include_once "../../api/dao/association.php";
             }
 
             // Récupération des données de l'association
-            fetch(`/api/association/getOne.php?association_id=${associationId}`, { // Correction du paramètre utilisé
+            fetch(`/api/association/getOne.php?id=${associationId}`, {
                 headers: {
                     'Authorization': 'Bearer ' + getToken()
                 }
             })
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error('Association non trouvée');
+                        return response.json().then(err => {
+                            throw new Error(err.message || 'Association non trouvée');
+                        });
                     }
                     return response.json();
                 })
@@ -104,7 +106,7 @@ include_once "../../api/dao/association.php";
                     }
 
                     // Remplir le formulaire avec les données de l'association
-                    document.getElementById('id').value = association.id; // Correction du champ ID
+                    document.getElementById('id').value = association.id;
                     document.getElementById('name').value = association.name || '';
                     document.getElementById('description').value = association.description || '';
                     document.getElementById('logo').value = association.logo || '';

@@ -24,12 +24,13 @@ function getAllAssociations()
 {
     try {
         $db = getDatabaseConnection();
-        $sql = "SELECT association_id, name,description,banniere,logo,date_creation,desactivate FROM association";
+        $sql = "SELECT association_id, name, description, banniere, logo, date_creation, desactivate FROM association";
         $stmt = $db->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
-        echo "Erreur lors de la recuperation des associations : " . $e->getMessage();
-        return [];
+        // Log error instead of echoing it
+        error_log("Error getting associations: " . $e->getMessage());
+        return []; // Return empty array on error
     }
 }
 
@@ -42,11 +43,16 @@ function getAssociationById($association_id)
         $stmt = $db->prepare($sql);
         $res = $stmt->execute(['association_id' => $association_id]);
         if (!$res) {
+            error_log("Execute failed in getAssociationById for ID: $association_id");
             return null;
         }
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$result) {
+            error_log("No association found with ID: $association_id");
+        }
+        return $result;
     } catch (PDOException $e) {
-        echo "Erreur lors de la récupération de l'association: " . $e->getMessage();
+        error_log("Error in getAssociationById: " . $e->getMessage());
         return null;
     }
 }
@@ -114,20 +120,32 @@ function updateAssociation($association_id, ?string $name = null, ?string $descr
     return null;
 }
 
+/**
+ * Soft deletion of association by setting desactivate flag to 1
+ * This preserves the association data but marks it as inactive
+ */
 function deleteAssociation($association_id)
 {
-    $db = getDatabaseConnection();
-    $sql = "UPDATE association SET desactivate = 1 WHERE association_id = :id";
-    $stmt = $db->prepare($sql);
-    $res = $stmt->execute(['id' => $association_id]);
-    if (!$res) {
+    try {
+        // Direct, simple database update - no extra complexity
+        $db = getDatabaseConnection();
+        $sql = "UPDATE association SET desactivate = 1 WHERE association_id = :id";
+        $stmt = $db->prepare($sql);
+        $res = $stmt->execute(['id' => $association_id]);
+        
+        if (!$res) {
+            error_log("Failed to deactivate association ID: $association_id");
+            return null;
+        }
+        
+        // Skip event deactivation for now to isolate the issue
+        // We'll handle events separately once basic functionality works
+        
+        return $stmt->rowCount(); // Will return number of affected rows
+    } catch (Exception $e) {
+        error_log("Error in deleteAssociation: " . $e->getMessage());
         return null;
     }
-    $resultat=desactivateEventFromAssociation($association_id);
-    if ($resultat && $res) {
-        return $stmt->rowCount();
-    }
-    return null;
 }
 
 function getAssociationByName($name)
@@ -174,7 +192,74 @@ function getEmployeesByAssociation($association_id, $limit = null, $offset = nul
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
-        echo "Erreur lors de la récupération des employés de l'association: " . $e->getMessage();
+        // Log error instead of echoing it
+        error_log("Error getting employees: " . $e->getMessage());
+        return []; // Return empty array on error
+    }
+}
+
+function getDonationsByAssociationId($association_id)
+{
+    try {
+        $db = getDatabaseConnection();
+        $sql = "SELECT d.don_id, d.montant, d.date, d.id_collaborateur,
+                c.collaborateur_id, c.nom, c.prenom, c.email 
+                FROM don d
+                LEFT JOIN collaborateur c ON d.id_collaborateur = c.collaborateur_id 
+                WHERE d.id_association = :association_id
+                ORDER BY d.date DESC";
+        
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam(':association_id', $association_id, PDO::PARAM_INT);
+        $stmt->execute();
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Error getting donations: " . $e->getMessage());
+        return []; // Return empty array on error
+    }
+}
+
+function getTotalDonationsByAssociationId($association_id) 
+{
+    try {
+        $db = getDatabaseConnection();
+        $sql = "SELECT COUNT(*) as donation_count, SUM(montant) as total_amount 
+                FROM don 
+                WHERE id_association = :association_id";
+                
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam(':association_id', $association_id, PDO::PARAM_INT);
+        $stmt->execute();
+        
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Error getting donation totals: " . $e->getMessage());
+        return ['donation_count' => 0, 'total_amount' => 0];
+    }
+}
+
+function diagnosticDonationsByAssociation($association_id = null) 
+{
+    try {
+        $db = getDatabaseConnection();
+        $sql = "SELECT d.*, a.name as association_name, c.nom, c.prenom 
+                FROM don d
+                LEFT JOIN association a ON d.id_association = a.association_id
+                LEFT JOIN collaborateur c ON d.id_collaborateur = c.collaborateur_id";
+                
+        if ($association_id !== null) {
+            $sql .= " WHERE d.id_association = :association_id";
+            $stmt = $db->prepare($sql);
+            $stmt->bindParam(':association_id', $association_id, PDO::PARAM_INT);
+        } else {
+            $stmt = $db->prepare($sql);
+        }
+        
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Error in diagnostic: " . $e->getMessage());
         return [];
     }
 }

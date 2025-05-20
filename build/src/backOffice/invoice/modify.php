@@ -322,7 +322,7 @@ include_once "../includes/head.php";
 
             // Collecte des données du formulaire
             const formData = {
-                id: document.getElementById('invoice_id').value,
+                facture_id: document.getElementById('invoice_id').value,
                 date_emission: document.getElementById('date_emission').value,
                 date_echeance: document.getElementById('date_echeance').value,
                 id_prestataire: document.getElementById('id_prestataire').value,
@@ -341,7 +341,7 @@ include_once "../includes/head.php";
             }
 
             // Envoi des données à l'API
-            fetch('/api/invoice/update.php', {
+            fetch('../../api/invoice/modify.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -361,7 +361,7 @@ include_once "../includes/head.php";
                 showAlert('success', 'Facture mise à jour avec succès');
                 // Redirection vers la page de détail de la facture après 2 secondes
                 setTimeout(() => {
-                    window.location.href = `detail.php?id=${formData.id}`;
+                    window.location.href = `details.php?id=${formData.facture_id}`;
                 }, 2000);
             })
             .catch(error => {

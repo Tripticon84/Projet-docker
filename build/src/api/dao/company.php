@@ -3,14 +3,11 @@ require_once $_SERVER['DOCUMENT_ROOT'] . "/api/utils/database.php";
 require_once $_SERVER['DOCUMENT_ROOT'] . "/api/utils/hashPassword.php";
 
 
-function createSociety($nom, $email, $adresse, $contact_person, $password, $telephone, $siret, $desactivate )
+function createSociety($nom, $email, $adresse, $contact_person, $password, $telephone, $siret, $desactivate, $employee_count , $plan)
 {
     $db = getDatabaseConnection();
 
-    // Hasher le mot de passe
-    $password = hashPassword($password);
-
-    $sql = "INSERT INTO societe (nom, email, adresse, contact_person, password, telephone, date_creation, siret, desactivate) VALUES (:nom, :email, :adresse, :contact_person, :password, :telephone, :date_creation, :siret, :desactivate)";
+    $sql = "INSERT INTO societe (nom, email, adresse, contact_person, password, telephone, date_creation, siret, desactivate, employee_count, plan) VALUES (:nom, :email, :adresse, :contact_person, :password, :telephone, :date_creation, :siret, :desactivate, :employee_count, :plan)";
     $stmt = $db->prepare($sql);
     $res = $stmt->execute([
         'nom' => $nom,
@@ -21,7 +18,9 @@ function createSociety($nom, $email, $adresse, $contact_person, $password, $tele
         'telephone' => $telephone,
         'date_creation' => date('Y-m-d H:i:s'),
         'siret' => $siret,
-        'desactivate' => $desactivate
+        'desactivate' => $desactivate,
+        'employee_count' => $employee_count,
+        'plan' => $plan
     ]);
     if ($res) {
         return $db->lastInsertId("societe_id");
@@ -475,4 +474,143 @@ function getCompanyBySiret($siret)
     $stmt = $db->prepare($sql);
     $stmt->execute(['siret' => $siret]);
     return $stmt->fetch(PDO::FETCH_ASSOC);
+}
+
+function getCompanyActualSubscription($societe_id)
+{
+    $db = getDatabaseConnection();
+    $sql = "SELECT f.frais_id, f.nom, f.montant, f.date_creation, f.description, 
+            d.date_debut, d.date_fin, d.devis_id
+            FROM frais f
+            JOIN INCLUT_FRAIS_DEVIS ifd ON f.frais_id = ifd.id_frais
+            JOIN devis d ON ifd.id_devis = d.devis_id
+            WHERE f.est_abonnement = 1 
+            AND d.id_societe = :societe_id
+            AND d.is_contract = 1 AND d.date_fin >= NOW()
+            ORDER BY d.date_debut DESC
+            LIMIT 1";
+    $stmt = $db->prepare($sql);
+    $stmt->execute(['societe_id' => $societe_id]);
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
+
+// Fonction pour compter les employés actifs d'une société
+function countActiveEmployees($societe_id) {
+    try {
+        $db = getDatabaseConnection();
+        $sql = "SELECT COUNT(*) as employee_count FROM collaborateur WHERE id_societe = :societe_id AND desactivate = 0";
+        $stmt = $db->prepare($sql);
+        $stmt->execute(['societe_id' => $societe_id]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        // Ensure we return an integer (not a string)
+        return intval($result['employee_count']);
+    } catch (Exception $e) {
+        // Log error but don't crash
+        error_log("Error counting active employees: " . $e->getMessage());
+        return 0;
+    }
+}
+
+// Fonction pour vérifier si une société peut ajouter un nouvel employé
+function canAddEmployee($societe_id) {
+    $db = getDatabaseConnection();
+    
+    // Récupérer d'abord les données de la société pour connaître sa limite actuelle
+    $sql = "SELECT employee_count FROM societe WHERE societe_id = :societe_id";
+    $stmt = $db->prepare($sql);
+    $stmt->execute(['societe_id' => $societe_id]);
+    $society = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$society) {
+        return ['status' => false, 'message' => 'Société non trouvée'];
+    }
+    
+    $maxEmployees = intval($society['employee_count']);
+    
+    // Compter le nombre actuel d'employés actifs
+    $currentEmployees = countActiveEmployees($societe_id);
+    
+    // Vérifier si la société a déjà atteint sa limite
+    if ($currentEmployees >= $maxEmployees) {
+        return [
+            'status' => false, 
+            'message' => 'Vous avez atteint votre limite de '.$maxEmployees.' collaborateurs. Veuillez mettre à niveau votre abonnement pour ajouter plus de collaborateurs.',
+            'current' => $currentEmployees,
+            'max' => $maxEmployees
+        ];
+    }
+    
+    return [
+        'status' => true, 
+        'message' => 'Vous pouvez ajouter un nouvel employé',
+        'current' => $currentEmployees,
+        'max' => $maxEmployees,
+        'remaining' => $maxEmployees - $currentEmployees
+    ];
+}
+
+// Fonction pour obtenir les détails de l'abonnement et des limites de la société
+function getCompanySubscriptionDetails($societe_id) {
+    $subscription = getCompanyActualSubscription($societe_id);
+    $employeeLimit = canAddEmployee($societe_id);
+    
+    return [
+        'subscription' => $subscription,
+        'employee_limit' => $employeeLimit
+    ];
+}
+
+
+function getCompanyFees($societe_id)
+{
+    $db = getDatabaseConnection();
+    $sql = "SELECT f.frais_id, f.nom, f.montant, f.date_creation, f.description, 
+            d.date_debut, d.date_fin, d.devis_id
+            FROM frais f
+            JOIN INCLUT_FRAIS_DEVIS ifd ON f.frais_id = ifd.id_frais
+            JOIN devis d ON ifd.id_devis = d.devis_id
+            WHERE d.id_societe = :societe_id AND f.est_abonnement = 0";
+    $stmt = $db->prepare($sql);
+    $stmt->execute(['societe_id' => $societe_id]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function getCompanySubscriptions($societe_id)
+{
+    $db = getDatabaseConnection();
+    $sql = "SELECT f.frais_id, f.nom, f.montant, f.date_creation, f.description, 
+            d.date_debut, d.date_fin, d.devis_id
+            FROM frais f
+            JOIN INCLUT_FRAIS_DEVIS ifd ON f.frais_id = ifd.id_frais
+            JOIN devis d ON ifd.id_devis = d.devis_id
+            WHERE d.id_societe = :societe_id AND f.est_abonnement = 1";
+    $stmt = $db->prepare($sql);
+    $stmt->execute(['societe_id' => $societe_id]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+
+function addEmployeeToEmployeeCount($societe_id, $amout_to_add)
+{
+    $db = getDatabaseConnection();
+    $sql = "UPDATE societe SET employee_count = employee_count + :amout_to_add WHERE societe_id = :societe_id";
+    $stmt = $db->prepare($sql);
+    $res = $stmt->execute(['societe_id' => $societe_id, 'amout_to_add' => $amout_to_add]);
+    if ($res) {
+        return $stmt->rowCount();
+    }
+    return null;
+}
+
+function updateCompanyPlan($societe_id, $plan)
+{
+    $db = getDatabaseConnection();
+    $sql = "UPDATE societe SET plan = :plan WHERE societe_id = :societe_id";
+    $stmt = $db->prepare($sql);
+    $res = $stmt->execute(['societe_id' => $societe_id, 'plan' => $plan]);
+    if ($res) {
+        return $stmt->rowCount();
+    }
+    return null;
 }

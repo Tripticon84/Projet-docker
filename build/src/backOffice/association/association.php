@@ -138,6 +138,7 @@ include_once "../includes/head.php";
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
                     <button type="button" class="btn btn-primary" id="saveChangesBtn">Enregistrer les modifications</button>
+                    <button type="button" class="btn btn-danger" id="deleteAssociationBtn">Désactiver l'association</button>
                 </div>
             </div>
         </div>
@@ -156,9 +157,11 @@ include_once "../includes/head.php";
             });
 
             // Configurer le bouton de suppression
-            document.getElementById('deleteAssociationBtn').addEventListener('click', function() {
-                deleteAssociation();
-            });
+            if (document.getElementById('deleteAssociationBtn')) {
+                document.getElementById('deleteAssociationBtn').addEventListener('click', function() {
+                    deleteAssociation();
+                });
+            }
         });
 
         function fetchAssociations(page = 1) {
@@ -172,13 +175,29 @@ include_once "../includes/head.php";
                     'Authorization': 'Bearer ' + getToken()
                 }
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erreur réseau: ' + response.status);
+                }
+                
+                // Check if the response is JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error('Réponse non valide: le serveur n\'a pas retourné du JSON');
+                }
+                
+                return response.json();
+            })
             .then(data => {
                 associationsList.innerHTML = '';
 
                 // Mettre à jour les compteurs
                 document.getElementById('associationsCount').textContent = data.length;
-                document.getElementById('activeAssociationsCount').textContent = data.length; // À adapter si nécessaire
+                
+                // Calculer les associations actives (non désactivées)
+                const activeAssociations = data.filter(assoc => !assoc.desactivate).length;
+                document.getElementById('activeAssociationsCount').textContent = activeAssociations;
+                
                 document.getElementById('eventsCount').textContent = '-'; // À implémenter si nécessaire
 
                 if (data.length > 0) {
@@ -189,9 +208,9 @@ include_once "../includes/head.php";
                             <td>${association.name}</td>
                             <td>${truncateText(association.description, 50)}</td>
                             <td class="text-end">
-                                <a href="edit.php?id=${association.id}" class="btn btn-sm btn-primary">
+                                <button class="btn btn-sm btn-primary" onclick="viewAssociationDetails(${association.id})">
                                     <i class="fas fa-edit"></i> Modifier
-                                </a>
+                                </button>
                                 <a href="profil.php?id=${association.id}" class="btn btn-sm btn-info">
                                     <i class="fas fa-eye"></i> Voir
                                 </a>
@@ -205,7 +224,7 @@ include_once "../includes/head.php";
             })
             .catch(error => {
                 console.error('Erreur:', error);
-                associationsList.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Erreur lors du chargement des associations</td></tr>';
+                associationsList.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Erreur lors du chargement des associations: ${error.message}</td></tr>`;
             });
         }
 
@@ -216,7 +235,19 @@ include_once "../includes/head.php";
                     'Authorization': 'Bearer ' + getToken()
                 }
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erreur réseau: ' + response.status);
+                }
+                
+                // Check if the response is JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error('Réponse non valide: le serveur n\'a pas retourné du JSON');
+                }
+                
+                return response.json();
+            })
             .then(associations => {
                 const association = associations.find(a => a.id == associationId);
 
@@ -236,7 +267,7 @@ include_once "../includes/head.php";
             })
             .catch(error => {
                 console.error('Erreur:', error);
-                alert('Erreur lors du chargement des détails de l\'association');
+                alert('Erreur lors du chargement des détails de l\'association: ' + error.message);
             });
         }
 
@@ -249,7 +280,12 @@ include_once "../includes/head.php";
                     'Authorization': 'Bearer ' + getToken()
                 }
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erreur réseau: ' + response.status);
+                }
+                return response.json();
+            })
             .then(data => {
                 employeesList.innerHTML = '';
 
@@ -271,7 +307,7 @@ include_once "../includes/head.php";
             })
             .catch(error => {
                 console.error('Erreur:', error);
-                employeesList.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Erreur lors du chargement des employés</td></tr>';
+                employeesList.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Erreur lors du chargement des employés: ${error.message}</td></tr>`;
             });
         }
 
@@ -320,6 +356,64 @@ include_once "../includes/head.php";
         function truncateText(text, maxLength) {
             if (!text) return '';
             return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+        }
+
+        function deleteAssociation() {
+            const associationId = document.getElementById('modal-association-id').textContent;
+            
+            if (!confirm('Êtes-vous sûr de vouloir désactiver cette association ?')) {
+                return;
+            }
+            
+            fetch('../../api/association/delete.php', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + getToken()
+                },
+                body: JSON.stringify({
+                    association_id: associationId
+                })
+            })
+            .then(response => {
+                // First check response status
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        console.error('Server response:', text);
+                        try {
+                            // Try to parse as JSON
+                            return JSON.parse(text);
+                        } catch (e) {
+                            // Not JSON, throw with the raw text for debugging
+                            throw new Error(`Invalid response (${response.status}): ${text.substring(0, 150)}...`);
+                        }
+                    });
+                }
+                
+                // For successful responses, try to parse as JSON with fallback
+                return response.text().then(text => {
+                    try {
+                        return JSON.parse(text);
+                    } catch (e) {
+                        console.error('Failed to parse JSON response:', text);
+                        throw new Error('Invalid JSON response from server');
+                    }
+                });
+            })
+            .then(data => {
+                if (data && data.success) {
+                    alert('Association désactivée avec succès');
+                    currentModal.hide();
+                    fetchAssociations(currentPage);
+                } else {
+                    alert('Erreur lors de la désactivation de l\'association: ' + 
+                          (data && data.message ? data.message : 'Erreur inconnue'));
+                }
+            })
+            .catch(error => {
+                console.error('Erreur complète:', error);
+                alert('Erreur lors de la désactivation de l\'association: ' + error.message);
+            });
         }
     </script>
 

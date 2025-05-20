@@ -112,16 +112,16 @@ include_once "../includes/head.php";
         document.addEventListener('DOMContentLoaded', function() {
             // Récupération de l'ID du prestataire depuis l'URL
             const urlParams = new URLSearchParams(window.location.search);
-            const providerId = urlParams.get('id');
+            const id = urlParams.get('prestataire_id');
 
-            if (!providerId) {
+            if (!id) {
                 document.getElementById('loadingIndicator').style.display = 'none';
                 document.getElementById('notFoundMessage').style.display = 'block';
                 return;
             }
 
             // Récupération des données du prestataire
-            fetch(`../../api/provider/getOne.php?id=${providerId}`, {
+            fetch(`../../api/provider/getOne.php?prestataire_id=${id}`, {
                 headers: {
                     'Authorization': 'Bearer ' + getToken()
                 }

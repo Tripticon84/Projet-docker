@@ -1,0 +1,334 @@
+[2025-05-18 12:04:39] === DÉBUT DE LA TRANSACTION DE PAIEMENT ===
+[2025-05-18 12:04:39] URL complète: /frontOffice/societe/register/payment_status.php?payment_intent=pi_3RQ5xKP0arAN6IC00Aw7qEKX&redirect_status=succeeded
+[2025-05-18 12:04:39] Données de la société présentes en session - {
+    "nom": "EntrepriseTest",
+    "siret": "44306184100047",
+    "adresse": "3 rue du test, Test, 91720",
+    "email": "test@test.fr",
+    "contact_person": "Test test",
+    "telephone": "0164995938",
+    "password": "testtesttest",
+    "confirm_password": null,
+    "employee_count": "18",
+    "plan": "starter",
+    "price": 3240,
+    "invoice_number": "INV-20250518-2933",
+    "total": 3888
+}
+[2025-05-18 12:04:39] Paramètres reçus - {
+    "payment_intent": "pi_3RQ5xKP0arAN6IC00Aw7qEKX",
+    "redirect_status": "succeeded"
+}
+[2025-05-18 12:04:39] Initialisation de Stripe avec la clé secrète
+[2025-05-18 12:04:39] Récupération du PaymentIntent depuis Stripe: pi_3RQ5xKP0arAN6IC00Aw7qEKX
+[2025-05-18 12:04:40] PaymentIntent récupéré - {
+    "id": "pi_3RQ5xKP0arAN6IC00Aw7qEKX",
+    "object": "payment_intent",
+    "amount": 388800,
+    "amount_capturable": 0,
+    "amount_details": {
+        "tip": []
+    },
+    "amount_received": 388800,
+    "application": null,
+    "application_fee_amount": null,
+    "automatic_payment_methods": {
+        "allow_redirects": "always",
+        "enabled": true
+    },
+    "canceled_at": null,
+    "cancellation_reason": null,
+    "capture_method": "automatic_async",
+    "client_secret": "pi_3RQ5xKP0arAN6IC00Aw7qEKX_secret_4H3820dWVJUjluFUYxfiA8xUj",
+    "confirmation_method": "automatic",
+    "created": 1747569878,
+    "currency": "eur",
+    "customer": null,
+    "description": "Abonnement Starter - 18 salari\u00e9s",
+    "last_payment_error": null,
+    "latest_charge": "ch_3RQ5xKP0arAN6IC00WFbA9Fw",
+    "livemode": false,
+    "metadata": {
+        "company_name": "EntrepriseTest",
+        "company_siret": "44306184100047",
+        "employee_count": "18",
+        "invoice_number": "INV-20250518-2933",
+        "plan": "starter"
+    },
+    "next_action": null,
+    "on_behalf_of": null,
+    "payment_method": "pm_1RQ5xKP0arAN6IC0ODAmCl9o",
+    "payment_method_configuration_details": {
+        "id": "pmc_1RAte7P0arAN6IC0qein3DVW",
+        "parent": null
+    },
+    "payment_method_options": {
+        "bancontact": {
+            "preferred_language": "en"
+        },
+        "card": {
+            "installments": null,
+            "mandate_options": null,
+            "network": null,
+            "request_three_d_secure": "automatic"
+        },
+        "eps": [],
+        "giropay": [],
+        "klarna": {
+            "preferred_locale": null
+        },
+        "link": {
+            "persistent_token": null
+        }
+    },
+    "payment_method_types": [
+        "card",
+        "bancontact",
+        "eps",
+        "giropay",
+        "klarna",
+        "link"
+    ],
+    "processing": null,
+    "receipt_email": null,
+    "review": null,
+    "setup_future_usage": null,
+    "shipping": null,
+    "source": null,
+    "statement_descriptor": null,
+    "statement_descriptor_suffix": null,
+    "status": "succeeded",
+    "transfer_data": null,
+    "transfer_group": null
+}
+[2025-05-18 12:04:40] Paiement confirmé comme réussi
+[2025-05-18 12:04:40] Préparation de l'appel API pour créer la société: http://localhost/api/company/create.php
+[2025-05-18 12:04:40] Données pour la création de société - {
+    "nom": "EntrepriseTest",
+    "email": "test@test.fr",
+    "adresse": "3 rue du test, Test, 91720",
+    "contact_person": "Test test",
+    "password": "***MASQU\u00c9***",
+    "telephone": "0164995938",
+    "siret": "44306184100047",
+    "desactivate": 0,
+    "plan": "starter",
+    "employee_count": "18"
+}
+[2025-05-18 12:04:40] Exécution de la requête API pour créer la société
+[2025-05-18 12:04:40] Réponse API (HTTP Code: 201) - {"error":"cURL error: SSL certificate problem: unable to get local issuer certificate"}{"societe_id":"8"}
+[2025-05-18 12:04:40] JSON malformé détecté, mais extraction réussie d'un objet valide - {
+    "societe_id": "8"
+}
+[2025-05-18 12:04:40] Société créée avec succès, ID: 8
+[2025-05-18 12:04:40] Préparation de l'appel API pour créer le devis: http://localhost/api/estimate/create.php
+[2025-05-18 12:04:40] Calcul des montants - {
+    "total_cents": 388800,
+    "total_euros": 3888,
+    "montant_ht": 3110.40000000000009094947017729282379150390625
+}
+[2025-05-18 12:04:40] Données pour la création du devis - {
+    "date_debut": "2025-05-18",
+    "date_fin": "2026-05-18",
+    "montant_ht": 3110.40000000000009094947017729282379150390625,
+    "statut": "accept\u00e9",
+    "is_contract": 1,
+    "id_societe": "8",
+    "description": "Abonnement Business Care - starter - 18 employ\u00e9s"
+}
+[2025-05-18 12:04:40] Exécution de la requête API pour créer le devis
+[2025-05-18 12:04:40] Réponse API de création de devis (HTTP Code: 201) - {"id":"8","pdf_path":"\/data\/estimate\/EntrepriseTest\/18-05-2025_8.pdf"}
+[2025-05-18 12:04:40] Devis créé avec succès, ID: 8
+[2025-05-18 12:04:40] Préparation de l'appel API pour créer l'abonnement dans la table frais: http://localhost/api/fees/create.php
+[2025-05-18 12:04:40] Données pour la création de l'abonnement - {
+    "nom": "Abonnement starter - 18 employes",
+    "montant": 3888,
+    "description": "Abonnement Business Care - starter - 18 employes",
+    "est_abonnement": 1
+}
+[2025-05-18 12:04:40] Exécution de la requête API pour créer l'abonnement
+[2025-05-18 12:04:40] Réponse API de création d'abonnement (HTTP Code: 500) - 
+[2025-05-18 12:04:40] ERREUR: Impossible de décoder la réponse JSON de l'abonnement - {
+    "error": "Syntax error",
+    "raw_response": ""
+}
+[2025-05-18 12:04:40] EXCEPTION ATTRAPÉE: Erreur lors du décodage de la réponse API d'abonnement: No error
+[2025-05-18 12:04:40] Trace: #0 {main}
+[2025-05-18 12:04:40] === FIN DE LA TRANSACTION DE PAIEMENT ===
+[2025-05-18 12:32:03] === DÉBUT DE LA TRANSACTION DE PAIEMENT ===
+[2025-05-18 12:32:03] URL complète: /frontOffice/societe/register/payment_status.php?payment_intent=pi_3RQ6NpP0arAN6IC01HtclAxv&redirect_status=succeeded
+[2025-05-18 12:32:03] Données de la société présentes en session - {
+    "nom": "EntrepriseTest",
+    "siret": "44306184100047",
+    "adresse": "3 rue du test, Test, 91720",
+    "email": "test@test.fr",
+    "contact_person": "Test test",
+    "telephone": "0164995938",
+    "password": "testtesttest",
+    "confirm_password": null,
+    "employee_count": "18",
+    "plan": "starter",
+    "price": 3240,
+    "invoice_number": "INV-20250518-8056",
+    "total": 3888
+}
+[2025-05-18 12:32:03] Paramètres reçus - {
+    "payment_intent": "pi_3RQ6NpP0arAN6IC01HtclAxv",
+    "redirect_status": "succeeded"
+}
+[2025-05-18 12:32:03] Initialisation de Stripe avec la clé secrète
+[2025-05-18 12:32:03] Récupération du PaymentIntent depuis Stripe: pi_3RQ6NpP0arAN6IC01HtclAxv
+[2025-05-18 12:32:03] PaymentIntent récupéré - {
+    "id": "pi_3RQ6NpP0arAN6IC01HtclAxv",
+    "object": "payment_intent",
+    "amount": 388800,
+    "amount_capturable": 0,
+    "amount_details": {
+        "tip": []
+    },
+    "amount_received": 388800,
+    "application": null,
+    "application_fee_amount": null,
+    "automatic_payment_methods": {
+        "allow_redirects": "always",
+        "enabled": true
+    },
+    "canceled_at": null,
+    "cancellation_reason": null,
+    "capture_method": "automatic_async",
+    "client_secret": "pi_3RQ6NpP0arAN6IC01HtclAxv_secret_reWzCO2h0O7Hz3xqVjl559Eho",
+    "confirmation_method": "automatic",
+    "created": 1747571521,
+    "currency": "eur",
+    "customer": null,
+    "description": "Abonnement Starter - 18 salari\u00e9s",
+    "last_payment_error": null,
+    "latest_charge": "ch_3RQ6NpP0arAN6IC01NaYyXjv",
+    "livemode": false,
+    "metadata": {
+        "company_name": "EntrepriseTest",
+        "company_siret": "44306184100047",
+        "employee_count": "18",
+        "invoice_number": "INV-20250518-8056",
+        "plan": "starter"
+    },
+    "next_action": null,
+    "on_behalf_of": null,
+    "payment_method": "pm_1RQ6NqP0arAN6IC0RDhxcg9p",
+    "payment_method_configuration_details": {
+        "id": "pmc_1RAte7P0arAN6IC0qein3DVW",
+        "parent": null
+    },
+    "payment_method_options": {
+        "bancontact": {
+            "preferred_language": "en"
+        },
+        "card": {
+            "installments": null,
+            "mandate_options": null,
+            "network": null,
+            "request_three_d_secure": "automatic"
+        },
+        "eps": [],
+        "giropay": [],
+        "klarna": {
+            "preferred_locale": null
+        },
+        "link": {
+            "persistent_token": null
+        }
+    },
+    "payment_method_types": [
+        "card",
+        "bancontact",
+        "eps",
+        "giropay",
+        "klarna",
+        "link"
+    ],
+    "processing": null,
+    "receipt_email": null,
+    "review": null,
+    "setup_future_usage": null,
+    "shipping": null,
+    "source": null,
+    "statement_descriptor": null,
+    "statement_descriptor_suffix": null,
+    "status": "succeeded",
+    "transfer_data": null,
+    "transfer_group": null
+}
+[2025-05-18 12:32:03] Paiement confirmé comme réussi
+[2025-05-18 12:32:03] Préparation de l'appel API pour créer la société: http://localhost/api/company/create.php
+[2025-05-18 12:32:03] Données pour la création de société - {
+    "nom": "EntrepriseTest",
+    "email": "test@test.fr",
+    "adresse": "3 rue du test, Test, 91720",
+    "contact_person": "Test test",
+    "password": "***MASQU\u00c9***",
+    "telephone": "0164995938",
+    "siret": "44306184100047",
+    "desactivate": 0,
+    "plan": "starter",
+    "employee_count": "18"
+}
+[2025-05-18 12:32:03] Exécution de la requête API pour créer la société
+[2025-05-18 12:32:04] Réponse API (HTTP Code: 201) - {"error":"cURL error: SSL certificate problem: unable to get local issuer certificate"}{"societe_id":"9"}
+[2025-05-18 12:32:04] JSON malformé détecté, mais extraction réussie d'un objet valide - {
+    "societe_id": "9"
+}
+[2025-05-18 12:32:04] Société créée avec succès, ID: 9
+[2025-05-18 12:32:04] Préparation de l'appel API pour créer le devis: http://localhost/api/estimate/create.php
+[2025-05-18 12:32:04] Calcul des montants - {
+    "total_cents": 388800,
+    "total_euros": 3888,
+    "montant_ht": 3110.40000000000009094947017729282379150390625
+}
+[2025-05-18 12:32:04] Données pour la création du devis - {
+    "date_debut": "2025-05-18",
+    "date_fin": "2026-05-18",
+    "montant_ht": 3110.40000000000009094947017729282379150390625,
+    "statut": "accept\u00e9",
+    "is_contract": 1,
+    "id_societe": "9",
+    "description": "Abonnement Business Care - starter - 18 employ\u00e9s"
+}
+[2025-05-18 12:32:04] Exécution de la requête API pour créer le devis
+[2025-05-18 12:32:04] Réponse API de création de devis (HTTP Code: 201) - {"id":"9","pdf_path":"\/data\/estimate\/EntrepriseTest\/18-05-2025_9.pdf"}
+[2025-05-18 12:32:04] Devis créé avec succès, ID: 9
+[2025-05-18 12:32:04] Préparation de l'appel API pour créer l'abonnement dans la table frais: http://localhost/api/fees/create.php
+[2025-05-18 12:32:04] Données pour la création de l'abonnement - {
+    "nom": "Abonnement starter - 18 employes",
+    "montant": 3888,
+    "description": "Abonnement Business Care - starter - 18 employes",
+    "est_abonnement": 1
+}
+[2025-05-18 12:32:04] Exécution de la requête API pour créer l'abonnement
+[2025-05-18 12:32:04] Réponse API de création d'abonnement (HTTP Code: 201) - {"frais_id":"7"}
+[2025-05-18 12:32:04] Abonnement créé avec succès, ID: 7
+[2025-05-18 12:32:04] Préparation de l'appel API pour lier l'abonnement et le devis: http://localhost/api/fees/link-devis.php
+[2025-05-18 12:32:04] Données pour lier l'abonnement et le devis - {
+    "frais_id": "7",
+    "devis_id": "9"
+}
+[2025-05-18 12:32:04] Exécution de la requête API pour lier l'abonnement et le devis
+[2025-05-18 12:32:04] Réponse API de liaison d'abonnement et de devis (HTTP Code: 201) - {"message":"Frais 7 linked to devis 9 successfully"}
+[2025-05-18 12:32:04] Liaison de l'abonnement et du devis réussie
+[2025-05-18 12:32:04] Préparation de l'appel API pour créer la facture: http://localhost/api/invoice/create.php
+[2025-05-18 12:32:04] Données pour la création de la facture - {
+    "date_emission": "2025-05-18",
+    "date_echeance": "2025-06-17",
+    "montant": 3888,
+    "montant_tva": 777.6000000000000227373675443232059478759765625,
+    "montant_ht": 3110.40000000000009094947017729282379150390625,
+    "statut": "Payee",
+    "methode_paiement": "carte bancaire",
+    "id_devis": "9",
+    "id_prestataire": null
+}
+[2025-05-18 12:32:04] Exécution de la requête API pour créer la facture
+[2025-05-18 12:32:04] Réponse API de création de facture (HTTP Code: 201) - {"id":"7","message":"Facture cr\u00e9\u00e9e avec succ\u00e8s"}
+[2025-05-18 12:32:04] Facture créée avec succès, ID: 7
+[2025-05-18 12:32:04] Transaction complétée avec succès pour l'email: test@test.fr
+[2025-05-18 12:32:04] Nettoyage de la session company_data
+[2025-05-18 12:32:04] === FIN DE LA TRANSACTION DE PAIEMENT ===

@@ -55,7 +55,7 @@ include_once $_SERVER['DOCUMENT_ROOT'] . '/frontOffice/societe/includes/head.php
             </div>
 
             <!-- Autres frais -->
-            <div class="card">
+            <div class="card mb-4">
                 <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Vos Autres Frais</h5>
                     <span class="badge bg-light text-info" id="total-costs">0</span>
@@ -115,7 +115,183 @@ include_once $_SERVER['DOCUMENT_ROOT'] . '/frontOffice/societe/includes/head.php
     function loadAllData() {
         loadSubscriptions(societyId);
         loadOtherCosts(societyId);
-        updateCounters(societyId);
+    }
+
+    // Fonction pour charger les abonnements
+    function loadSubscriptions(societyId) {
+        document.getElementById('subscriptions-table').innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Chargement des abonnements...</span>
+                    </div>
+                </td>
+            </tr>
+        `;
+        
+        fetch(`/api/company/getSubscriptions.php?societe_id=${societyId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (!data || data.error || data.length === 0) {
+                    document.getElementById('subscriptions-table').innerHTML = `
+                        <tr>
+                            <td colspan="5" class="text-center">Aucun abonnement trouvé</td>
+                        </tr>
+                    `;
+                    document.getElementById('total-subscriptions').textContent = '0';
+                    return;
+                }
+                
+                let html = '';
+                data.forEach(subscription => {
+                    html += `
+                        <tr>
+                            <td>${subscription.nom}</td>
+                            <td>${parseFloat(subscription.montant).toFixed(2)}€</td>
+                            <td>${subscription.description || 'Non spécifié'}</td>
+                            <td>${subscription.date_creation}</td>
+                            <td>
+                                <button class="btn btn-sm btn-info view-cost" data-id="${subscription.frais_id}" data-bs-toggle="modal" data-bs-target="#viewCostModal">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                document.getElementById('subscriptions-table').innerHTML = html;
+                document.getElementById('total-subscriptions').textContent = data.length;
+                
+                // Ajouter les écouteurs d'événements
+                document.querySelectorAll('.view-cost').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const costId = this.getAttribute('data-id');
+                        showCostDetails(costId);
+                    });
+                });
+            })
+            .catch(error => {
+                console.error('Erreur lors du chargement des abonnements:', error);
+                document.getElementById('subscriptions-table').innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center">Erreur lors du chargement des abonnements</td>
+                    </tr>
+                `;
+                document.getElementById('total-subscriptions').textContent = '0';
+            });
+    }
+
+    // Fonction pour charger les autres frais (non-abonnements)
+    function loadOtherCosts(societyId) {
+        document.getElementById('costs-table').innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center">
+                    <div class="spinner-border text-info" role="status">
+                        <span class="visually-hidden">Chargement des frais...</span>
+                    </div>
+                </td>
+            </tr>
+        `;
+        
+        fetch(`/api/company/getFees.php?societe_id=${societyId}`)
+            .then(response => response.json())
+            .then(data => {
+                // Filtrer pour garder tous les frais qui ne sont PAS des abonnements (est_abonnement != 1)
+                const otherCosts = data.filter(fee => fee.est_abonnement !== 1 && fee.est_abonnement !== '1');
+                
+                if (!otherCosts || otherCosts.length === 0) {
+                    document.getElementById('costs-table').innerHTML = `
+                        <tr>
+                            <td colspan="5" class="text-center">Aucun frais trouvé</td>
+                        </tr>
+                    `;
+                    document.getElementById('total-costs').textContent = '0';
+                    return;
+                }
+                
+                let html = '';
+                otherCosts.forEach(cost => {
+                    html += `
+                        <tr>
+                            <td>${cost.nom}</td>
+                            <td>${parseFloat(cost.montant).toFixed(2)}€</td>
+                            <td>${cost.description || 'Non spécifié'}</td>
+                            <td>${cost.date_creation}</td>
+                            <td>
+                                <button class="btn btn-sm btn-info view-cost" data-id="${cost.frais_id}" data-bs-toggle="modal" data-bs-target="#viewCostModal">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                document.getElementById('costs-table').innerHTML = html;
+                document.getElementById('total-costs').textContent = otherCosts.length;
+                
+                // Ajouter les écouteurs d'événements
+                document.querySelectorAll('.view-cost').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const costId = this.getAttribute('data-id');
+                        showCostDetails(costId);
+                    });
+                });
+            })
+            .catch(error => {
+                console.error('Erreur lors du chargement des frais:', error);
+                document.getElementById('costs-table').innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center">Erreur lors du chargement des frais</td>
+                    </tr>
+                `;
+                document.getElementById('total-costs').textContent = '0';
+            });
+    }
+
+    // Fonction pour afficher les détails d'un frais
+    function showCostDetails(costId) {
+        // D'abord essayer de récupérer tous les frais
+        fetch(`/api/company/getFees.php?societe_id=${societyId}`)
+            .then(response => response.json())
+            .then(data => {
+                // Trouver le frais spécifique par son ID
+                const cost = data.find(item => item.frais_id == costId);
+                
+                if (!cost) {
+                    document.getElementById('cost-details').innerHTML = `<p>Aucune information disponible</p>`;
+                    return;
+                }
+                
+                const detailsHTML = `
+                    <div class="mb-3">
+                        <strong>Nom:</strong> ${cost.nom}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Montant:</strong> ${parseFloat(cost.montant).toFixed(2)}€
+                    </div>
+                    <div class="mb-3">
+                        <strong>Description:</strong> ${cost.description || 'Non spécifié'}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Date de création:</strong> ${cost.date_creation}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Type:</strong> ${cost.est_abonnement == 1 ? 'Abonnement' : 'Frais ponctuel'}
+                    </div>
+                    ${cost.devis && cost.devis.devis_id ? 
+                        `<div class="mb-3">
+                            <strong>Lié au devis:</strong> #${cost.devis.devis_id}
+                            ${cost.devis.date_debut ? `<br><strong>Période:</strong> Du ${cost.devis.date_debut} au ${cost.devis.date_fin}` : ''}
+                            ${cost.devis.statut ? `<br><strong>Statut:</strong> ${cost.devis.statut}` : ''}
+                        </div>` : ''}
+                `;
+                
+                document.getElementById('cost-details').innerHTML = detailsHTML;
+            })
+            .catch(error => {
+                console.error('Erreur lors du chargement des détails:', error);
+                document.getElementById('cost-details').innerHTML = `<p>Erreur lors du chargement des détails</p>`;
+            });
     }
 
     // Fonction d'initialisation
@@ -128,6 +304,4 @@ include_once $_SERVER['DOCUMENT_ROOT'] . '/frontOffice/societe/includes/head.php
             loadAllData();
         });
     });
-
-
 </script>

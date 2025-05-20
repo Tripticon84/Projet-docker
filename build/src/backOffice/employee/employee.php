@@ -159,15 +159,7 @@ if (!$employeeStats) {
                             <a href="create.php" class="btn btn-sm btn-outline-primary mt-2">Ajouter</a>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="card text-center p-3 mb-3">
-                            <div class="mb-3">
-                                <i class="fas fa-envelope fa-2x text-warning"></i>
-                            </div>
-                            <h6>Envoyer message groupé</h6>
-                            <a href="#" class="btn btn-sm btn-outline-warning mt-2">Composer</a>
-                        </div>
-                    </div>
+
                 </div>
             </main>
         </div>

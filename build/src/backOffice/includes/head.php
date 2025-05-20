@@ -1,7 +1,10 @@
 <?php
 
 session_start();
-
+if (!isset($_SESSION["admin_id"]) && $title != "Connexion") {
+    header("location: /backOffice/index.php");
+    exit();
+}
 
 ?>
 
@@ -29,7 +32,10 @@ session_start();
             return tokenCookie ? tokenCookie.split('=')[1] : null;
         };
 
-
+        if (getToken() === null && !document.title.includes("Connexion")) {
+            alert("Vous devez vous connecter pour accéder à cette page.");
+            window.location.href = "/backOffice/login/logout.php";
+        }
 
 
         document.addEventListener('hidden.bs.modal', function() {

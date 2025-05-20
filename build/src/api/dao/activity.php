@@ -110,51 +110,78 @@ function updateActivity(int $activite_id, string $nom = null, string $type = nul
 
 function getActivityById($id)
 {
-    $connection = getDatabaseConnection();
-    $sql = "SELECT activite_id, nom, type, date, id_prestataire, id_devis, id_lieu FROM activite WHERE activite_id = :id";
-    $query = $connection->prepare($sql);
-    $res = $query->execute(['id' => $id]);
-    if ($res) {
-        return $query->fetch(PDO::FETCH_ASSOC);
+    try {
+        $connection = getDatabaseConnection();
+        $sql = "SELECT activite_id, nom, type, date, id_prestataire, id_devis, id_lieu, desactivate FROM activite WHERE activite_id = :id";
+        $query = $connection->prepare($sql);
+        $res = $query->execute(['id' => $id]);
+        if ($res) {
+            return $query->fetch(PDO::FETCH_ASSOC);
+        }
+        error_log("Erreur SQL dans getActivityById: " . implode(" ", $query->errorInfo()));
+        return null;
+    } catch (PDOException $e) {
+        error_log("Exception PDO dans getActivityById: " . $e->getMessage());
+        return null;
     }
-    return null;
 }
 
 function getAllActivity($desactivate = null, $limit = null, $offset = null, $search = null)
 {
-    $db = getDatabaseConnection();
-    $sql = "SELECT activite_id, nom, type, date, id_devis, id_prestataire, id_lieu, desactivate FROM activite";
-    $params = [];
-    $whereAdded = false;
+    try {
+        $db = getDatabaseConnection();
+        $sql = "SELECT activite_id, nom, type, date, id_devis, id_prestataire, id_lieu, desactivate FROM activite";
+        $params = [];
+        $whereAdded = false;
 
-    if ($desactivate !== null) {
-        $sql .= " WHERE desactivate = :desactivate";
-        $params['desactivate'] = $desactivate;
-        $whereAdded = true;
-    }
-
-    if ($search !== null) {
-        $sql .= $whereAdded ? " AND" : " WHERE";
-        $sql .= " (nom LIKE :search OR type LIKE :search)";
-        $params['search'] = "%$search%";
-    }
-
-    // Gestion des paramètres LIMIT et OFFSET
-    if ($limit !== null) {
-        $sql .= " LIMIT " . (string) $limit;
-
-        if ($offset !== null) {
-            $sql .= " OFFSET " . (string) $offset;
+        // S'assurer que desactivate est correctement traité comme un boolean/int
+        if ($desactivate !== null) {
+            // Convertir explicitement en entier 0 ou 1
+            $desactivateValue = (is_numeric($desactivate)) ? intval($desactivate) : ($desactivate === 'true' ? 1 : 0);
+            
+            $sql .= " WHERE desactivate = :desactivate";
+            $params['desactivate'] = $desactivateValue;
+            $whereAdded = true;
+            
+            error_log("Filtre desactivate appliqué avec valeur: " . $desactivateValue);
         }
-    }
 
-    $stmt = $db->prepare($sql);
-    $res = $stmt->execute($params);
+        if ($search !== null) {
+            $sql .= $whereAdded ? " AND" : " WHERE";
+            $sql .= " (nom LIKE :search OR type LIKE :search)";
+            $params['search'] = "%$search%";
+        }
 
-    if ($res) {
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        // Gestion des paramètres LIMIT et OFFSET
+        if ($limit !== null) {
+            $sql .= " LIMIT " . (string) $limit;
+
+            if ($offset !== null) {
+                $sql .= " OFFSET " . (string) $offset;
+            }
+        }
+        
+        // Log de la requête SQL complète avec les paramètres
+        $logQuery = $sql;
+        foreach ($params as $key => $value) {
+            $logQuery = str_replace(":$key", "'$value'", $logQuery);
+        }
+        error_log("Requête SQL exécutée: " . $logQuery);
+
+        $stmt = $db->prepare($sql);
+        $res = $stmt->execute($params);
+
+        if ($res) {
+            $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            error_log("Nombre d'activités récupérées: " . count($results));
+            return $results;
+        }
+        error_log("Erreur SQL dans getAllActivity: " . implode(" ", $stmt->errorInfo()));
+        return null;
+    } catch (PDOException $e) {
+        error_log("Exception PDO dans getAllActivity: " . $e->getMessage());
+        return null;
     }
-    return null;
 }
 
 function getActivityByType($type, $limit = null, $offset = null)

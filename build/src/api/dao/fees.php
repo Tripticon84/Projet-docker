@@ -13,7 +13,7 @@ function createFrais($nom, $montant, $description, $est_abonnement = 0)
     $res = $stmt->execute([
         'nom' => $nom,
         'montant' => $montant,
-        'date_creation' => date('d-m-Y H:i:s'),
+        'date_creation' => date('Y-m-d H:i:s'),
         'description' => $description,
         'est_abonnement' => $est_abonnement
     ]);
